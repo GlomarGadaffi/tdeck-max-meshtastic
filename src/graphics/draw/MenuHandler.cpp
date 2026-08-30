@@ -132,12 +132,24 @@ uint8_t test_count = 0;
 
 void menuHandler::loraMenu()
 {
+#if defined(HAS_LORA_ANTENNA_SELECT)
+    static const char *optionsArray[] = {"Back", "Device Role", "Radio Preset", "Frequency Slot", "LoRa Region", "Antenna"};
+    enum optionsNumbers {
+        Back = 0,
+        DeviceRolePicker = 1,
+        RadioPresetPicker = 2,
+        FrequencySlot = 3,
+        LoraPicker = 4,
+        AntennaPicker = 5
+    };
+#else
     static const char *optionsArray[] = {"Back", "Device Role", "Radio Preset", "Frequency Slot", "LoRa Region"};
     enum optionsNumbers { Back = 0, DeviceRolePicker = 1, RadioPresetPicker = 2, FrequencySlot = 3, LoraPicker = 4 };
+#endif
     BannerOverlayOptions bannerOptions;
     bannerOptions.message = "LoRa Actions";
     bannerOptions.optionsArrayPtr = optionsArray;
-    bannerOptions.optionsCount = 5;
+    bannerOptions.optionsCount = sizeof(optionsArray) / sizeof(optionsArray[0]);
     bannerOptions.bannerCallback = [](int selected) -> void {
         if (selected == Back) {
             // No action
@@ -149,6 +161,10 @@ void menuHandler::loraMenu()
             menuHandler::menuQueue = menuHandler::FrequencySlot;
         } else if (selected == LoraPicker) {
             menuHandler::menuQueue = menuHandler::LoraPicker;
+#if defined(HAS_LORA_ANTENNA_SELECT)
+        } else if (selected == AntennaPicker) {
+            menuHandler::menuQueue = menuHandler::AntennaPicker;
+#endif
         }
     };
     screen->showOverlayBanner(bannerOptions);
@@ -2174,6 +2190,30 @@ void menuHandler::BrightnessPickerMenu()
     screen->showOverlayBanner(bannerOptions);
 }
 
+void menuHandler::antennaPickerMenu()
+{
+#if defined(HAS_LORA_ANTENNA_SELECT)
+    static const char *optionsArray[] = {"Back", "Internal", "External"};
+    enum optionsNumbers { Back = 0, Internal = 1, External = 2 };
+
+    BannerOverlayOptions bannerOptions;
+    bannerOptions.message = "LoRa Antenna";
+    bannerOptions.optionsArrayPtr = optionsArray;
+    bannerOptions.optionsCount = 3;
+    bannerOptions.bannerCallback = [](int selected) -> void {
+        if (selected == Back)
+            return;
+
+        // The antenna is an RF switch, so the new route takes effect without a reboot.
+        bool external = (selected == External);
+        if (external != tdeckMaxUseExternalAntenna())
+            tdeckMaxSetAntenna(external);
+    };
+    bannerOptions.InitialSelected = tdeckMaxUseExternalAntenna() ? External : Internal;
+    screen->showOverlayBanner(bannerOptions);
+#endif
+}
+
 void menuHandler::switchToMUIMenu()
 {
     static const char *optionsArray[] = {"No", "Yes"};
@@ -2832,6 +2872,9 @@ void menuHandler::handleMenuSwitch(OLEDDisplay *display)
         break;
     case BrightnessPicker:
         BrightnessPickerMenu();
+        break;
+    case AntennaPicker:
+        antennaPickerMenu();
         break;
     case NodeNameLengthMenu:
         nodeNameLengthMenu();

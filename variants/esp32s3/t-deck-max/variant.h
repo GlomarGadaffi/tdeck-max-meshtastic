@@ -109,6 +109,15 @@
 #define SX126X_DIO2_AS_RF_SWITCH
 #define SX126X_DIO3_TCXO_VOLTAGE 2.4
 
+// The LoRa antenna is an electronic RF switch on the XL9555 (EXPANDS_LORA_SEL), so the
+// internal/external choice is a runtime setting rather than a soldered link. The choice is
+// persisted in NVS and re-applied by earlyInitVariant() before the radio comes up.
+#define HAS_LORA_ANTENNA_SELECT
+#ifdef __cplusplus
+bool tdeckMaxUseExternalAntenna();
+void tdeckMaxSetAntenna(bool external);
+#endif
+
 // A7682E modem pins are defined but the expander-controlled rail stays off by default.
 #define MODEM_RI BOARD_A7682E_RI
 #define MODEM_DTR BOARD_A7682E_DTR

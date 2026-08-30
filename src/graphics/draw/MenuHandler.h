@@ -31,6 +31,7 @@ class menuHandler
         BuzzerModeMenuPicker,
         MuiPicker,
         BrightnessPicker,
+        AntennaPicker,
         RebootMenu,
         ShutdownMenu,
         NodePickerMenu,
@@ -95,6 +96,7 @@ class menuHandler
     static void nodeListMenu();
     static void resetNodeDBMenu();
     static void BrightnessPickerMenu();
+    static void antennaPickerMenu();
     static void rebootMenu();
     static void shutdownMenu();
     static void NodePicker();

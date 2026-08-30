@@ -1,12 +1,46 @@
 #include "variant.h"
 #include "ExtensionIOXL9555.hpp"
+#include "configuration.h"
+#include <Preferences.h>
 
 extern ExtensionIOXL9555 io;
+
+// NVS home for the antenna choice. Keys are limited to 15 characters.
+static const char *kAntennaPrefsNamespace = "tdeckmax";
+static const char *kAntennaPrefsKey = "extAnt";
+
+// This build ships with the external SMA antenna selected; the internal antenna is opt-in.
+static const bool kAntennaDefaultExternal = true;
 
 static void setExpandPin(uint8_t pin, uint8_t value)
 {
     io.pinMode(pin, OUTPUT);
     io.digitalWrite(pin, value);
+}
+
+bool tdeckMaxUseExternalAntenna()
+{
+    Preferences prefs;
+    // begin() fails when the namespace has never been written, so fall back to the default.
+    if (!prefs.begin(kAntennaPrefsNamespace, true))
+        return kAntennaDefaultExternal;
+    bool external = prefs.getBool(kAntennaPrefsKey, kAntennaDefaultExternal);
+    prefs.end();
+    return external;
+}
+
+void tdeckMaxSetAntenna(bool external)
+{
+    // EXPANDS_LORA_SEL: HIGH selects the internal antenna, LOW the external SMA connector.
+    setExpandPin(EXPANDS_LORA_SEL, external ? LOW : HIGH);
+
+    Preferences prefs;
+    if (prefs.begin(kAntennaPrefsNamespace, false)) {
+        prefs.putBool(kAntennaPrefsKey, external);
+        prefs.end();
+    }
+
+    LOG_INFO("LoRa antenna: %s", external ? "external" : "internal");
 }
 
 static void pulseExpandPinLow(uint8_t pin, uint32_t lowMs, uint32_t highMs)
@@ -34,7 +68,12 @@ void earlyInitVariant()
     setExpandPin(EXPANDS_MODEM_EN, LOW);
     setExpandPin(EXPANDS_MODEM_PWRKEY, LOW);
     setExpandPin(EXPANDS_LORA_EN, HIGH);
-    setExpandPin(EXPANDS_LORA_SEL, HIGH);
+    // Apply the saved antenna choice directly rather than via tdeckMaxSetAntenna(), so a plain
+    // boot does not rewrite NVS.
+    bool useExternalAntenna = tdeckMaxUseExternalAntenna();
+    // No LOG_INFO here: earlyInitVariant() runs before the logging subsystem is up, and
+    // RedirectablePrint::log() panics if called this early.
+    setExpandPin(EXPANDS_LORA_SEL, useExternalAntenna ? LOW : HIGH);
     setExpandPin(EXPANDS_GPS_EN, HIGH);
     setExpandPin(EXPANDS_1V8_EN, HIGH);
     setExpandPin(EXPANDS_DRV_EN, HIGH);
