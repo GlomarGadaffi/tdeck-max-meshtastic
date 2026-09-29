@@ -2206,8 +2206,10 @@ void menuHandler::antennaPickerMenu()
 
         // The antenna is an RF switch, so the new route takes effect without a reboot.
         bool external = (selected == External);
-        if (external != tdeckMaxUseExternalAntenna())
+        if (external != tdeckMaxUseExternalAntenna()) {
             tdeckMaxSetAntenna(external);
+            LOG_INFO("LoRa antenna: %s", external ? "external" : "internal");
+        }
     };
     bannerOptions.InitialSelected = tdeckMaxUseExternalAntenna() ? External : Internal;
     screen->showOverlayBanner(bannerOptions);

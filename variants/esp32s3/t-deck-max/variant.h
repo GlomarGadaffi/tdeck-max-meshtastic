@@ -58,8 +58,10 @@
 #define HAS_I2S
 #define DAC_I2S_BCK BOARD_ES8311_SCLK
 #define DAC_I2S_WS BOARD_ES8311_LRCK
-#define DAC_I2S_DOUT BOARD_ES8311_DSDIN
-#define DAC_I2S_DIN BOARD_ES8311_ASDOUT
+// ESP32-side naming: the vendor ASDOUT/DSDIN names are swapped on real hardware
+// (measured: MCU DOUT = GPIO40, MCU DIN = GPIO17; matches LilyGO playWAV.ino setPins order).
+#define DAC_I2S_DOUT BOARD_ES8311_ASDOUT
+#define DAC_I2S_DIN BOARD_ES8311_DSDIN
 #define DAC_I2S_MCLK BOARD_ES8311_MCLK
 
 // Gyroscope BHI260AP

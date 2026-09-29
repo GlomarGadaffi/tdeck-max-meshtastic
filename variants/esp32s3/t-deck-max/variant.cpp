@@ -1,6 +1,7 @@
 #include "variant.h"
 #include "ExtensionIOXL9555.hpp"
-#include "configuration.h"
+// No configuration.h here: it pulls in mesh.pb.h -> <pb.h> (Nanopb), and pioarduino's hybrid
+// pass 1 compiles this directory with lib_deps cleared, so Nanopb is not on the include path.
 #include <Preferences.h>
 
 extern ExtensionIOXL9555 io;
@@ -39,8 +40,6 @@ void tdeckMaxSetAntenna(bool external)
         prefs.putBool(kAntennaPrefsKey, external);
         prefs.end();
     }
-
-    LOG_INFO("LoRa antenna: %s", external ? "external" : "internal");
 }
 
 static void pulseExpandPinLow(uint8_t pin, uint32_t lowMs, uint32_t highMs)
